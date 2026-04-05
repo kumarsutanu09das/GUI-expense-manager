@@ -1,43 +1,72 @@
 # 💸 Expense Manager
 
-A sleek and efficient GUI-based tool to manage, split, and export your expenses seamlessly.
+A sleek, portable, and efficient GUI-based tool to manage, split, and export your expenses seamlessly. **No Java installation required!**
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start (Clone & Run)
 
-The project has been packaged into a Windows executable for easy access. You can find the distribution files in the following directory:
+Get up and running in seconds. Choose your platform:
 
-📂 **Path:** `out/artifacts/expense_manager_jar/`
+### 🐧 Linux (Native)
+1. **Clone the repo:** 
+   ```bash
+   git clone https://github.com/kumarsutanu09das/GUI-expense-manager.git
+   ```
+2. **Navigate to the binary:** 
+   ```bash
+   cd GUI-expense-manager/dist-linux/bin
+   ```
+3. **Run the app:** 
+   ```bash
+   ./expense-manager
+   ```
+   *(Note: Run `chmod +x ./expense-manager` if you encounter permission issues.)*
 
-### 📦 Installation & Running
+### 🪟 Windows (Executable)
+1. **Clone the repo:** 
+   ```bash
+   git clone https://github.com/kumarsutanu09das/GUI-expense-manager.git
+   ```
+2. **Open the folder:** Navigate to `GUI-expense-manager/dist-windows/` in File Explorer.
+3. **Launch:** Double-click `expense-manager.exe` to start the application.
 
-1. **Navigate to the Release Folder:**
-   Go to `out/artifacts/expense_manager_jar/`.
+---
 
-2. **Launch the Application:**
-   Simply double-click on `expense-manager.exe` to start the application.
+## 📂 Project Structure
 
-3. **Runtime Dependency:**
-   Ensure the `jre/` folder remains in the same directory as `expense-manager.exe`. This folder contains the necessary Java Runtime Environment to power the application without requiring a system-wide Java installation.
+| Directory | Description |
+| :--- | :--- |
+| **`dist-linux/`** | Self-contained Linux distribution with bundled JRE. |
+| **`dist-windows/`** | Windows launcher (`.exe`) and application assets. |
+| **`src/`** | Complete Java source code. |
+| **`out/`** | Compiled artifacts and class files. |
 
 ---
 
 ## ✨ Key Features
 
-- **Intuitive GUI:** Manage your trips and daily expenses with a user-friendly interface.
-- **Split Engine:** Automatically calculate splits among participants.
-- **PDF Export:** Generate professional expense reports in PDF format for easy sharing.
-- **Portability:** Carry the `expense_manager_jar` folder anywhere; it runs out-of-the-box with its bundled JRE.
+- **🎯 Zero Setup:** Bundled Java Runtime Environment (JRE) ensures the app runs even if Java isn't installed on the system.
+- **🎨 Intuitive GUI:** A clean, user-friendly interface built for rapid expense entry.
+- **⚖️ Smart Split Engine:** Automatically calculates debts and credits among trip participants.
+- **📄 PDF Export:** Generate professional, shareable PDF reports of your expenses with one click.
+- **🛡️ 100% Offline:** Your data stays private and secure on your local machine.
 
 ---
 
 ## 🛠️ Built With
 
-- **Java Swing/AWT:** For the graphical user interface.
-- **Launch4j:** Used to wrap the JAR into a native Windows executable.
-- **Custom Split Logic:** Precise calculation of debts and credits.
+- **Java 21+** - Core logic and performance.
+- **Swing/AWT** - Native graphical user interface.
+- **jpackage** - Used for bundling the Linux runtime.
+- **Launch4j** - Used for creating the Windows executable.
 
 ---
 
-*Happy Budgeting!* 📊
+## 🤝 Contributing
+
+Contributions are welcome! If you have suggestions for new features or improvements, feel free to fork the repository and submit a pull request.
+
+---
+
+*Developed with ❤️ by [kumarsutanu09das](https://github.com/kumarsutanu09das)*
