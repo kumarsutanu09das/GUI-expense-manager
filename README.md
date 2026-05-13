@@ -1,71 +1,103 @@
-# 💸 Expense Manager
+# 💸 Expense Manager Pro
 
-A sleek, portable, and efficient GUI-based tool to manage, split, and export your expenses seamlessly. **No Java installation required!**
+A sleek, portable, and efficient tool to manage, split, and export your expenses seamlessly. Whether you prefer a modern **Graphical User Interface (GUI)** or a powerful **Command Line Interface (CLI)**, Expense Manager has you covered.
 
 ---
 
-## 🚀 Quick Start (Clone & Run)
-
-Get up and running in seconds. Choose your platform:
+## 🚀 Quick Start
 
 ### 🐧 Linux (Native)
 1. **Clone the repo:** 
    ```bash
    git clone https://github.com/kumarsutanu09das/GUI-expense-manager.git
+   cd GUI-expense-manager
    ```
-2. **Navigate to the binary:** 
+2. **Run the app:** 
    ```bash
-   cd GUI-expense-manager/dist-linux/bin
+   ./release/ExpenseManager/bin/ExpenseManager
    ```
-3. **Run the app:** 
-   ```bash
-   ./expense-manager
-   ```
-   *(Note: Run `chmod +x ./expense-manager` if you encounter permission issues.)*
 
-### 🪟 Windows (Executable)
-1. **Clone the repo:** 
-   ```bash
-   git clone https://github.com/kumarsutanu09das/GUI-expense-manager.git
-   ```
-2. **Open the folder:** Navigate to `GUI-expense-manager/dist-windows/` in File Explorer.
-3. **Launch:** Double-click `expense-manager.exe` to start the application.
+### 🪟 Windows
+1. **Launch:** Double-click `expense-manager.exe` in the release folder.
 
----
+### 💻 Developer Mode (Run from Source)
+Requires **Java 21+**.
+```bash
+# Compile
+javac -d out/production/expense-manager -cp src src/Main.java
 
-## 📂 Project Structure
+# Run GUI
+java -cp out/production/expense-manager Main
 
-| Directory | Description |
-| :--- | :--- |
-| **`dist-linux/`** | Self-contained Linux distribution with bundled JRE. |
-| **`dist-windows/`** | Windows launcher (`.exe`) and application assets. |
-| **`src/`** | Complete Java source code. |
-| **`out/`** | Compiled artifacts and class files. |
+# Run CLI
+java -cp out/production/expense-manager Main --cli
+```
 
 ---
 
 ## ✨ Key Features
 
-- **🎯 Zero Setup:** Bundled Java Runtime Environment (JRE) ensures the app runs even if Java isn't installed on the system.
-- **🎨 Intuitive GUI:** A clean, user-friendly interface built for rapid expense entry.
-- **⚖️ Smart Split Engine:** Automatically calculates debts and credits among trip participants.
-- **📄 PDF Export:** Generate professional, shareable PDF reports of your expenses with one click.
-- **🛡️ 100% Offline:** Your data stays private and secure on your local machine.
+- **🎨 Intuitive GUI:** Built with Java Swing/AWT, featuring a clean layout for rapid expense entry.
+- **💻 Power CLI:** Full-featured command-line interface for automation and advanced users.
+- **⚖️ Smart Split Engine:** Uses a greedy debt-simplification algorithm to minimize the number of transactions required to settle up.
+- **📄 PDF Export:** Generate professional HTML-templated PDF reports with detailed logs and settlement instructions.
+- **🛡️ 100% Offline:** No cloud, no tracking. Your data stays on your machine.
+- **🎯 Zero Setup:** Bundled JRE in releases means no Java installation is required for end-users.
 
 ---
 
-## 🛠️ Built With
+## 🖥️ Using the GUI
 
-- **Java 21+** - Core logic and performance.
-- **Swing/AWT** - Native graphical user interface.
-- **jpackage** - Used for bundling the Linux runtime.
-- **Launch4j** - Used for creating the Windows executable.
+1. **Add Participants:** Enter names in the left panel to build your trip group.
+2. **Record Expenses:** 
+   - Select the **Payer**.
+   - **Multi-select** who shared the expense (Ctrl+Click).
+   - Enter description and amount.
+3. **Live Dashboard:** The right panel updates instantly with a detailed log and the "Who owes Whom" summary.
+4. **Export:** Click "Export to PDF" to save a formatted report.
+
+---
+
+## ⌨️ Using the CLI
+
+Start the application with the `--cli` flag. Commands follow the `expense <action>` syntax.
+
+### Common Commands:
+
+| Command | Description | Example |
+| :--- | :--- | :--- |
+| `add` | Add a new expense | `expense add 1200 --payer Alice --participants Alice,Bob,Charlie --trip "Goa" --split equal` |
+| `record-payment` | Record a direct payment | `expense record-payment Bob 400 --to Alice --trip "Goa"` |
+| `settle` | View settlement plan | `expense settle trip "Goa"` |
+| `list` | Show all transactions | `expense list trip "Goa"` |
+| `report` | Generate trip report | `expense report trip "Goa"` |
+| `clear` | Wipe trip data | `expense clear trip "Goa"` |
+
+> **Note:** The CLI supports custom split ratios using `--split 1:2:1`.
+
+---
+
+## 🛠️ Technical Deep Dive
+
+### Debt Simplification Algorithm
+The core `SplitEngine` implements a greedy netting logic:
+1. Calculates the **Net Balance** for each participant (Total Spent - Total Share).
+2. Separates participants into **Debtors** and **Creditors**.
+3. Successively matches the largest debtor with the largest creditor until all balances are near zero.
+4. This results in the **mathematically minimum** number of transactions.
+
+### PDF Generation
+The `PDFExporter` utilizes Java's `Printable` API combined with an HTML template engine. This allows for rich styling (CSS) in the generated reports while remaining lightweight and dependency-free.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! If you have suggestions for new features or improvements, feel free to fork the repository and submit a pull request.
+1. Fork the project.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
 ---
 
