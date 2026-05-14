@@ -1,353 +1,298 @@
-import com.expense.logic.SplitEngine;
-import com.expense.model.Expense;
-import com.expense.model.Participant;
-import com.expense.util.PDFExporter;
-
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class Main extends JFrame {
-
+    // Data
     private List<Participant> participants = new ArrayList<>();
     private List<Expense> expenses = new ArrayList<>();
     private double totalTripCost = 0;
 
-    private DefaultTableModel expenseTableModel;
-    private JTable expenseTable;
+    // UI Components
+    private DefaultTableModel tableModel;
     private JTextArea summaryArea;
     private JLabel totalCostLabel;
-    private JComboBox<Participant> payerComboBox;
-    private JList<Participant> selectionList;
+    private JComboBox<Participant> payerCombo;
+    private JList<Participant> sharerList;
     private DefaultListModel<Participant> listModel;
+    
+    // Colors - Modern Palette
+    private final Color PRIMARY = new Color(33, 150, 243); // Blue
+    private final Color ACCENT = new Color(76, 175, 80);  // Green
+    private final Color DANGER = new Color(244, 67, 54);  // Red
+    private final Color BG_DARK = new Color(33, 37, 41);
+    private final Color CARD_BG = Color.WHITE;
+    private final Color TEXT_MAIN = new Color(44, 62, 80);
 
     public Main() {
-        setupUI();
+        initTheme();
+        initUI();
     }
 
-    private void setupUI() {
-        setTitle("Adventure Trip Expense Splitter Pro");
-        setSize(1000, 850);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setLayout(new BorderLayout(10, 10));
-
-        // Set Look and Feel
+    private void initTheme() {
         try {
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            UIManager.put("Button.arc", 10);
+            UIManager.put("Component.arc", 10);
+            UIManager.put("TextComponent.arc", 10);
         } catch (Exception ignored) {}
+    }
 
-        // --- Header Panel ---
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(60, 179, 113));
-        JLabel titleLabel = new JLabel(" Trip Expense Manager ", JLabel.CENTER);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
-        headerPanel.add(titleLabel, BorderLayout.CENTER);
-        add(headerPanel, BorderLayout.NORTH);
+    private void initUI() {
+        setTitle("Elite Expense Manager - Pro Edition");
+        setSize(1100, 800);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(new Color(240, 242, 245));
+        setLayout(new BorderLayout(0, 0));
 
-        // --- Main Content Area (Split Pane) ---
-        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        mainSplitPane.setDividerLocation(350);
-
-        // --- Left Panel: Management ---
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // 1. Participant Management
-        JPanel partPanel = createStyledSection("Add Participant");
-        JTextField partField = new JTextField();
-        JButton addPartBtn = createStyledButton("Add Person", new Color(70, 130, 180));
-        partPanel.add(new JLabel("Name:"));
-        partPanel.add(partField);
-        partPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        partPanel.add(addPartBtn);
-
-        // 2. Expense Management
-        JPanel expPanel = createStyledSection("Record Expense");
-        JTextField descField = new JTextField();
-        JTextField amountField = new JTextField();
-        payerComboBox = new JComboBox<>();
+        // --- Header ---
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(BG_DARK);
+        header.setPreferredSize(new Dimension(0, 70));
+        header.setBorder(new EmptyBorder(0, 25, 0, 25));
         
-        // Multi-select list for participants sharing this expense
+        JLabel logo = new JLabel("ELITE EXPENSE");
+        logo.setFont(new Font("Inter", Font.BOLD, 22));
+        logo.setForeground(Color.WHITE);
+        header.add(logo, BorderLayout.WEST);
+
+        totalCostLabel = new JLabel("Total Trip: ₹0.00");
+        totalCostLabel.setFont(new Font("Inter", Font.BOLD, 18));
+        totalCostLabel.setForeground(ACCENT);
+        header.add(totalCostLabel, BorderLayout.EAST);
+        add(header, BorderLayout.NORTH);
+
+        // --- Container Split ---
+        JPanel body = new JPanel(new BorderLayout(20, 20));
+        body.setBorder(new EmptyBorder(20, 20, 20, 20));
+        body.setOpaque(false);
+
+        // --- Left Sidebar (Forms) ---
+        JPanel sidebar = new JPanel();
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setOpaque(false);
+        sidebar.setPreferredSize(new Dimension(350, 0));
+
+        // Section 1: Members
+        JPanel pCard = createCard("Manage Members");
+        JTextField nameIn = createStyledField();
+        JButton addPBtn = createStyledButton("Add Member", PRIMARY);
+        pCard.add(new JLabel("Member Name:"));
+        pCard.add(nameIn);
+        pCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        pCard.add(addPBtn);
+
+        // Section 2: Expense
+        JPanel eCard = createCard("New Transaction");
+        payerCombo = new JComboBox<>();
         listModel = new DefaultListModel<>();
-        selectionList = new JList<>(listModel);
-        selectionList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        JScrollPane listScroll = new JScrollPane(selectionList);
-        listScroll.setPreferredSize(new Dimension(0, 100));
+        sharerList = new JList<>(listModel);
+        sharerList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        JScrollPane sharerScroll = new JScrollPane(sharerList);
+        sharerScroll.setPreferredSize(new Dimension(0, 120));
+        
+        JTextField amtIn = createStyledField();
+        JTextField descIn = createStyledField();
+        JButton addEBtn = createStyledButton("Record Expense", ACCENT);
 
-        JButton addExpBtn = createStyledButton("Add Expense", new Color(60, 179, 113));
+        eCard.add(new JLabel("Who Paid?"));
+        eCard.add(payerCombo);
+        eCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        eCard.add(new JLabel("Split Among (Ctrl+Click):"));
+        eCard.add(sharerScroll);
+        eCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        
+        eCard.add(new JLabel("Expense Description:"));
+        eCard.add(descIn);
+        eCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        
+        eCard.add(new JLabel("Amount (₹):"));
+        eCard.add(amtIn);
+        eCard.add(Box.createRigidArea(new Dimension(0, 15)));
+        eCard.add(addEBtn);
 
-        expPanel.add(new JLabel("Payer:"));
-        expPanel.add(payerComboBox);
-        expPanel.add(new JLabel("Who Shares this Expense (Ctrl+Click):"));
-        expPanel.add(listScroll);
-        expPanel.add(new JLabel("Description:"));
-        expPanel.add(descField);
-        expPanel.add(new JLabel("Amount (₹):"));
-        expPanel.add(amountField);
-        expPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        expPanel.add(addExpBtn);
+        sidebar.add(pCard);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
+        sidebar.add(eCard);
+        body.add(sidebar, BorderLayout.WEST);
 
-        // 3. Stats Dashboard
-        JPanel statsPanel = createStyledSection("Dashboard Summary");
-        totalCostLabel = new JLabel("Total Trip Cost: ₹0.00");
-        totalCostLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        statsPanel.add(totalCostLabel);
+        // --- Right Content (Table & Settlement) ---
+        JPanel mainContent = new JPanel(new BorderLayout(0, 20));
+        mainContent.setOpaque(false);
 
-        leftPanel.add(partPanel);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(expPanel);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftPanel.add(statsPanel);
-        leftPanel.add(Box.createVerticalGlue());
+        // Table Card
+        JPanel tableCard = createCard("Transaction History");
+        tableCard.setLayout(new BorderLayout(0, 10));
+        String[] cols = {"Payer", "Amount", "Description", "Date"};
+        tableModel = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(tableModel);
+        styleTable(table);
+        tableCard.add(new JScrollPane(table), BorderLayout.CENTER);
+        
+        JPanel tableActions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        tableActions.setOpaque(false);
+        JButton clearBtn = createStyledButton("Reset Trip", Color.GRAY);
+        JButton pdfBtn = createStyledButton("Generate PDF", DANGER);
+        tableActions.add(clearBtn);
+        tableActions.add(pdfBtn);
+        tableCard.add(tableActions, BorderLayout.SOUTH);
 
-        // --- Right Panel: View ---
-        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
-        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
-
-        // Table
-        String[] columns = {"Payer", "Description", "Amount (₹)", "Timestamp"};
-        expenseTableModel = new DefaultTableModel(columns, 0);
-        expenseTable = new JTable(expenseTableModel);
-        expenseTable.setRowHeight(30);
-        expenseTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        styleTable();
-        JScrollPane tableScroll = new JScrollPane(expenseTable);
-        tableScroll.setBorder(BorderFactory.createTitledBorder("Detailed Expense Log"));
-
-        // Summary Area
-        summaryArea = new JTextArea(10, 30);
+        // Settlement Card
+        JPanel setCard = createCard("Live Settlements");
+        summaryArea = new JTextArea(10, 20);
         summaryArea.setEditable(false);
-        summaryArea.setFont(new Font("Consolas", Font.PLAIN, 15));
-        summaryArea.setBackground(new Color(245, 245, 245));
-        JScrollPane summaryScroll = new JScrollPane(summaryArea);
-        summaryScroll.setBorder(BorderFactory.createTitledBorder("Final Settlements (Who owes Whom)"));
+        summaryArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        summaryArea.setBackground(new Color(250, 250, 250));
+        setCard.add(new JScrollPane(summaryArea));
 
-        // Buttons
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton exportBtn = createStyledButton("Export to PDF Report", new Color(220, 20, 60));
-        JButton resetBtn = createStyledButton("Clear All", Color.GRAY);
-        actionPanel.add(resetBtn);
-        actionPanel.add(exportBtn);
+        mainContent.add(tableCard, BorderLayout.CENTER);
+        mainContent.add(setCard, BorderLayout.SOUTH);
+        body.add(mainContent, BorderLayout.CENTER);
 
-        rightPanel.add(tableScroll, BorderLayout.CENTER);
-        rightPanel.add(summaryScroll, BorderLayout.SOUTH);
-        rightPanel.add(actionPanel, BorderLayout.NORTH);
+        add(body, BorderLayout.CENTER);
 
-        mainSplitPane.setLeftComponent(leftPanel);
-        mainSplitPane.setRightComponent(rightPanel);
-        add(mainSplitPane, BorderLayout.CENTER);
-
-        // --- Event Handling ---
-        addPartBtn.addActionListener(e -> {
-            String name = partField.getText().trim();
+        // --- Logic Handlers ---
+        addPBtn.addActionListener(e -> {
+            String name = nameIn.getText().trim();
             if (!name.isEmpty()) {
                 Participant p = new Participant(name);
                 if (!participants.contains(p)) {
                     participants.add(p);
-                    payerComboBox.addItem(p);
                     listModel.addElement(p);
-                    partField.setText("");
-                    updateSummary();
+                    payerCombo.addItem(p);
+                    nameIn.setText("");
+                    updateUIState();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Participant already exists!");
+                    JOptionPane.showMessageDialog(this, "Name already exists!");
                 }
             }
         });
 
-        addExpBtn.addActionListener(e -> {
+        addEBtn.addActionListener(e -> {
             try {
-                Participant payer = (Participant) payerComboBox.getSelectedItem();
-                List<Participant> sharesWith = selectionList.getSelectedValuesList();
-                String desc = descField.getText().trim();
-                String amountStr = amountField.getText().trim();
+                Participant payer = (Participant) payerCombo.getSelectedItem();
+                List<Participant> sharers = sharerList.getSelectedValuesList();
+                double amt = Double.parseDouble(amtIn.getText());
+                String desc = descIn.getText().trim();
 
-                if (payer == null || sharesWith.isEmpty() || desc.isEmpty() || amountStr.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Please select payer, sharers, and enter details!");
+                if (payer == null || sharers.isEmpty() || desc.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Please fill all fields!");
                     return;
                 }
 
-                double amount = Double.parseDouble(amountStr);
-                Expense exp = new Expense(desc, amount, payer, sharesWith);
-                expenses.add(exp);
-                payer.addSpent(amount);
-                totalTripCost += amount;
-
-                expenseTableModel.addRow(new Object[]{
-                        payer.getName(), desc, String.format("%.2f", amount), exp.getTimestamp()
-                });
-
-                descField.setText("");
-                amountField.setText("");
-                selectionList.clearSelection();
-                updateSummary();
-
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Invalid amount!", "Error", JOptionPane.ERROR_MESSAGE);
+                Expense ex = new Expense(desc, amt, payer, sharers);
+                expenses.add(ex);
+                totalTripCost += amt;
+                tableModel.addRow(new Object[]{payer.getName(), String.format("₹%.2f", amt), desc, ex.getTimestamp()});
+                
+                amtIn.setText("");
+                descIn.setText("");
+                updateUIState();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid amount format!");
             }
         });
 
-        exportBtn.addActionListener(e -> exportPDF());
+        pdfBtn.addActionListener(e -> {
+            if (expenses.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No data to export!");
+                return;
+            }
+            List<String> sets = SplitEngine.getSettlements(participants, expenses);
+            PDFExporter.exportReport(this, expenses, participants, sets, totalTripCost);
+        });
 
-        resetBtn.addActionListener(e -> {
-            int res = JOptionPane.showConfirmDialog(this, "Are you sure you want to clear all data?", "Reset", JOptionPane.YES_NO_OPTION);
-            if (res == JOptionPane.YES_OPTION) {
+        clearBtn.addActionListener(e -> {
+            if (JOptionPane.showConfirmDialog(this, "Clear all data?", "Confirm", JOptionPane.YES_NO_OPTION) == 0) {
                 participants.clear();
                 expenses.clear();
                 totalTripCost = 0;
-                expenseTableModel.setRowCount(0);
-                payerComboBox.removeAllItems();
+                tableModel.setRowCount(0);
                 listModel.clear();
-                updateSummary();
+                payerCombo.removeAllItems();
+                updateUIState();
             }
         });
     }
 
-    private void updateSummary() {
-        totalCostLabel.setText(String.format("Total Trip Cost: ₹%.2f", totalTripCost));
-        if (participants.isEmpty()) {
-            summaryArea.setText("No participants added.");
-            return;
-        }
-
-        // --- Per-Expense Netting Logic ---
-        Map<Participant, Double> netBalances = new HashMap<>();
-        for (Participant p : participants) netBalances.put(p, 0.0);
-
-        for (Expense e : expenses) {
-            Participant payer = e.getPayer();
-            List<Participant> sharers = e.getParticipants();
-            double shareAmount = e.getAmount() / sharers.size();
-
-            netBalances.put(payer, netBalances.get(payer) + e.getAmount());
-            for (Participant s : sharers) {
-                netBalances.put(s, netBalances.get(s) - shareAmount);
-            }
-        }
-
-        List<String> settlements = SplitEngine.getSettlementList(netBalances);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("ADVANCED DEBT SIMPLIFICATION\n");
-        sb.append("===========================\n");
-        sb.append(String.format("Total Trip Cost: ₹%.2f\n", totalTripCost));
-        sb.append("---------------------------\n\n");
+    private void updateUIState() {
+        totalCostLabel.setText(String.format("Total Trip: ₹%.2f", totalTripCost));
+        List<String> sets = SplitEngine.getSettlements(participants, expenses);
         
-        sb.append("NET STATUS PER PERSON:\n");
-        for (Participant p : participants) {
-            double bal = netBalances.get(p);
-            String type = bal >= 0.01 ? "(Creditor - is owed)" : (bal < -0.01 ? "(Debtor - owes)" : "(Settled)");
-            sb.append(String.format("%-12s: ₹%10.2f %s\n", p.getName(), Math.abs(bal), type));
-        }
-
-        sb.append("\nSIMPLIFIED FINAL SETTLEMENTS:\n");
-        if (settlements.isEmpty()) {
-            sb.append("✅ All debts are settled!");
+        StringBuilder sb = new StringBuilder();
+        sb.append("FINAL SETTLEMENTS\n");
+        sb.append("==============================\n");
+        if (sets.isEmpty()) {
+            sb.append("\nNo debts pending. All settled!");
         } else {
-            for (String s : settlements) {
-                sb.append(" 👉 ").append(s).append("\n");
-            }
+            for (String s : sets) sb.append(" • ").append(s).append("\n");
         }
         summaryArea.setText(sb.toString());
     }
 
-    private void exportPDF() {
-        if (expenses.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No expenses to export!");
-            return;
-        }
-
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select Location to Save PDF Report");
-        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            java.io.File file = fileChooser.getSelectedFile();
-            String path = file.getAbsolutePath();
-            if (!path.toLowerCase().endsWith(".pdf")) {
-                path += ".pdf";
-                file = new java.io.File(path);
-            }
-
-            // Calculate current net balances based on per-expense shares
-            Map<Participant, Double> netBalances = new HashMap<>();
-            for (Participant p : participants) netBalances.put(p, 0.0);
-            for (Expense e : expenses) {
-                double shareAmount = e.getAmount() / e.getParticipants().size();
-                netBalances.put(e.getPayer(), netBalances.get(e.getPayer()) + e.getAmount());
-                for (Participant s : e.getParticipants()) {
-                    netBalances.put(s, netBalances.get(s) - shareAmount);
-                }
-            }
-            List<String> settlements = SplitEngine.getSettlementList(netBalances);
-            
-            // Pass the selected file to the exporter
-            PDFExporter.exportReportToFile(this, file, expenses, participants, settlements, totalTripCost);
-        }
+    // --- Component Styling Helpers ---
+    private JPanel createCard(String title) {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(CARD_BG);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
+            new EmptyBorder(15, 15, 15, 15)
+        ));
+        
+        JLabel titleLvl = new JLabel(title.toUpperCase());
+        titleLvl.setFont(new Font("Inter", Font.BOLD, 13));
+        titleLvl.setForeground(new Color(150, 150, 150));
+        titleLvl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        card.add(titleLvl);
+        card.add(Box.createRigidArea(new Dimension(0, 12)));
+        return card;
     }
 
-    private JPanel createStyledSection(String title) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200)),
-                title, 0, 0, new Font("Segoe UI", Font.BOLD, 14)));
-        panel.setMaximumSize(new Dimension(400, 350));
-        return panel;
+    private JTextField createStyledField() {
+        JTextField field = new JTextField();
+        field.setPreferredSize(new Dimension(0, 35));
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        field.setFont(new Font("Inter", Font.PLAIN, 14));
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            new EmptyBorder(0, 10, 0, 10)
+        ));
+        return field;
     }
 
     private JButton createStyledButton(String text, Color bg) {
         JButton btn = new JButton(text);
+        btn.setPreferredSize(new Dimension(0, 40));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         btn.setBackground(bg);
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setFont(new Font("Inter", Font.BOLD, 14));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
 
-    private void styleTable() {
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        expenseTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        expenseTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
-        expenseTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        expenseTable.getTableHeader().setBackground(new Color(240, 240, 240));
+    private void styleTable(JTable table) {
+        table.setRowHeight(35);
+        table.setFont(new Font("Inter", Font.PLAIN, 14));
+        table.setGridColor(new Color(245, 245, 245));
+        table.getTableHeader().setFont(new Font("Inter", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(250, 250, 250));
+        
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(JLabel.CENTER);
+        table.getColumnModel().getColumn(1).setCellRenderer(center);
+        table.getColumnModel().getColumn(3).setCellRenderer(center);
     }
 
     public static void main(String[] args) {
-        if (args.length > 0 && args[0].equalsIgnoreCase("--cli")) {
-            System.out.println("ExpenseSplitter CLI - Mode Active");
-            System.out.println("Type commands starting with 'expense' (e.g., 'expense add...')");
-            System.out.println("Type 'exit' to quit.");
-            
-            com.expense.logic.CLIController cli = new com.expense.logic.CLIController();
-            java.util.Scanner scanner = new java.util.Scanner(System.in);
-            
-            while (true) {
-                System.out.print("> ");
-                String input = scanner.nextLine();
-                if (input.equalsIgnoreCase("exit")) break;
-                if (input.startsWith("expense ")) {
-                    cli.processCommand(input);
-                } else {
-                    System.out.println("Invalid command. Start with 'expense'.");
-                }
-            }
-            scanner.close();
-        } else {
-            SwingUtilities.invokeLater(() -> new Main().setVisible(true));
-        }
+        SwingUtilities.invokeLater(() -> new Main().setVisible(true));
     }
 }

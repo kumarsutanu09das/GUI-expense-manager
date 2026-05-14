@@ -1,6 +1,6 @@
 # 💸 Expense Manager Pro
 
-A sleek, portable, and efficient tool to manage, split, and export your expenses seamlessly. Whether you prefer a modern **Graphical User Interface (GUI)** or a powerful **Command Line Interface (CLI)**, Expense Manager has you covered.
+A sleek, portable, and efficient tool to manage, split, and export your expenses seamlessly. Expense Manager features a modern **Graphical User Interface (GUI)** to help you keep track of shared costs.
 
 ---
 
@@ -14,23 +14,17 @@ A sleek, portable, and efficient tool to manage, split, and export your expenses
    ```
 2. **Run the app:** 
    ```bash
-   ./release/ExpenseManager/bin/ExpenseManager
+   ./src/MyLaunchApp/bin/MyLaunchApp
    ```
 
-### 🪟 Windows
-1. **Launch:** Double-click `expense-manager.exe` in the release folder.
-
 ### 💻 Developer Mode (Run from Source)
-Requires **Java 21+**.
+Requires **Java 17+**.
 ```bash
 # Compile
-javac -d out/production/expense-manager -cp src src/Main.java
+javac -d . src/*.java
 
 # Run GUI
-java -cp out/production/expense-manager Main
-
-# Run CLI
-java -cp out/production/expense-manager Main --cli
+java Main
 ```
 
 ---
@@ -38,11 +32,10 @@ java -cp out/production/expense-manager Main --cli
 ## ✨ Key Features
 
 - **🎨 Intuitive GUI:** Built with Java Swing/AWT, featuring a clean layout for rapid expense entry.
-- **💻 Power CLI:** Full-featured command-line interface for automation and advanced users.
 - **⚖️ Smart Split Engine:** Uses a greedy debt-simplification algorithm to minimize the number of transactions required to settle up.
 - **📄 PDF Export:** Generate professional HTML-templated PDF reports with detailed logs and settlement instructions.
 - **🛡️ 100% Offline:** No cloud, no tracking. Your data stays on your machine.
-- **🎯 Zero Setup:** Bundled JRE in releases means no Java installation is required for end-users.
+- **🎯 Zero Setup:** Bundled JRE in the `MyLaunchApp` folder means no Java installation is required for the native launcher.
 
 ---
 
@@ -54,26 +47,7 @@ java -cp out/production/expense-manager Main --cli
    - **Multi-select** who shared the expense (Ctrl+Click).
    - Enter description and amount.
 3. **Live Dashboard:** The right panel updates instantly with a detailed log and the "Who owes Whom" summary.
-4. **Export:** Click "Export to PDF" to save a formatted report.
-
----
-
-## ⌨️ Using the CLI
-
-Start the application with the `--cli` flag. Commands follow the `expense <action>` syntax.
-
-### Common Commands:
-
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `add` | Add a new expense | `expense add 1200 --payer Alice --participants Alice,Bob,Charlie --trip "Goa" --split equal` |
-| `record-payment` | Record a direct payment | `expense record-payment Bob 400 --to Alice --trip "Goa"` |
-| `settle` | View settlement plan | `expense settle trip "Goa"` |
-| `list` | Show all transactions | `expense list trip "Goa"` |
-| `report` | Generate trip report | `expense report trip "Goa"` |
-| `clear` | Wipe trip data | `expense clear trip "Goa"` |
-
-> **Note:** The CLI supports custom split ratios using `--split 1:2:1`.
+4. **Export:** Click "Generate PDF" to save a formatted report.
 
 ---
 
